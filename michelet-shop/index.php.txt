@@ -1,0 +1,189 @@
+<?php
+$success_msg = "";
+$error_msg = "";
+
+// Traitement formulaire
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $nom = htmlspecialchars(trim($_POST['Nom']));
+    $produit = htmlspecialchars(trim($_POST['Produit']));
+    $montant = htmlspecialchars(trim($_POST['Montant']));
+    $message = htmlspecialchars(trim($_POST['Message']));
+    $captcha = trim($_POST['captcha']);
+
+    if ($captcha != "5") {
+        $error_msg = "Captcha incorrect.";
+    } elseif ($nom && $produit && $montant) {
+        $ligne = date("Y-m-d H:i:s") . ",$nom,$produit,$montant,$message\n";
+        file_put_contents("commandes.csv", $ligne, FILE_APPEND | LOCK_EX);
+
+        $to = "sainvilusmichelet21@gmail.com";
+        $subject = "Confirmation paiement de $nom";
+        $body = "Nom: $nom\nProduit: $produit\nMontant payé: $montant\nMessage: $message";
+        $headers = "From: no-reply@tonsite.com";
+
+        if (mail($to, $subject, $body, $headers)) {
+            $success_msg = "Merci ! Votre confirmation a été enregistrée et envoyée.";
+        } else {
+            $error_msg = "Erreur lors de l'envoi de l'email. Confirmation enregistrée localement.";
+        }
+    } else {
+        $error_msg = "Veuillez remplir tous les champs obligatoires.";
+    }
+}
+?>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Catalogue & Contact</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin:0; padding:0; background:#f5f5f5; scroll-behavior:smooth;}
+        header { background:#2b7a0b; color:#fff; padding:15px 20px; position:fixed; top:0; width:100%; z-index:1000;}
+        header h1 { margin:0; display:inline-block; font-size:22px;}
+        nav { float:right; }
+        nav a { color:#fff; text-decoration:none; margin-left:15px; font-weight:bold; }
+        nav a:hover { text-decoration:underline; }
+        section { padding:100px 20px 50px 20px; max-width:1200px; margin:0 auto; }
+        h2 { text-align:center; margin-bottom:20px; }
+        .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:20px; justify-items:center; }
+        .produit { background:#fff; border:1px solid #ddd; border-radius:10px; padding:15px; text-align:center; width:100%; box-sizing:border-box; transition: transform 0.2s; }
+        .produit:hover { transform:translateY(-5px); box-shadow:0 5px 15px rgba(0,0,0,0.1); }
+        .produit img { max-width:100%; height:auto; border-radius:5px; margin-bottom:10px; }
+        .produit-name { font-weight:bold; font-size:18px; margin-bottom:5px; }
+        .produit-price { color:#2b7a0b; font-size:16px; margin-bottom:10px; }
+        .moncash-btn, .whatsapp-btn { display:inline-block; padding:10px 15px; background:#2b7a0b; color:#fff; border-radius:5px; text-decoration:none; font-weight:bold; transition: background 0.2s; margin-bottom:5px; }
+        .moncash-btn:hover, .whatsapp-btn:hover { background:#1e5a08; }
+        .contact-after { font-size:13px; color:#555; margin-bottom:10px; }
+        .instructions, .formulaire { background:#fff; border:1px solid #ddd; border-radius:10px; padding:20px; margin:20px auto; max-width:600px; }
+        .instructions ol { padding-left:20px; }
+        .formulaire label { display:block; margin-bottom:5px; font-weight:bold; }
+        .formulaire input, .formulaire select, .formulaire textarea { width:100%; padding:8px; margin-bottom:15px; border-radius:5px; border:1px solid #ccc; box-sizing:border-box; }
+        .formulaire button { background:#2b7a0b; color:#fff; border:none; padding:10px 15px; border-radius:5px; font-weight:bold; cursor:pointer; width:100%; }
+        .formulaire button:hover { background:#1e5a08; }
+        .success-msg { text-align:center; color:#2b7a0b; font-weight:bold; margin-bottom:20px; }
+        .error-msg { text-align:center; color:red; font-weight:bold; margin-bottom:20px; }
+        footer { background:#2b7a0b; color:#fff; text-align:center; padding:15px; margin-top:40px;}
+    </style>
+    <script>
+        function validateForm() {
+            var nom = document.getElementById("nom").value.trim();
+            var produit = document.getElementById("produit").value;
+            var montant = document.getElementById("montant").value.trim();
+            var captcha = document.getElementById("captcha").value.trim();
+            if (!nom || !produit || !montant || !captcha) { alert("Veuillez remplir tous les champs et le captcha."); return false; }
+            if (captcha != "5") { alert("Captcha incorrect."); return false; }
+            return true;
+        }
+    </script>
+</head>
+<body>
+<header>
+    <h1>Mon Catalogue</h1>
+    <nav>
+        <a href="#accueil">Accueil</a>
+        <a href="#apropos">À propos</a>
+        <a href="#contact">Contact</a>
+        <a href="#paiement">Paiement</a>
+    </nav>
+</header>
+
+<section id="accueil">
+    <h2>Catalogue Produits</h2>
+    <div class="grid">
+        <?php
+        $produits = [
+            ["bourse-homme.jpg","Bourse homme",350],
+            ["bourses-femmes.jpg","Bourse femme",450],
+            ["cadre-photo.jpg","Cadre photo",400],
+            ["coque.jpg","Coque téléphone",400],
+            ["tasse.jpg","Photo sur tasse",180],
+            ["mug-tasse.jpg","Photo sur mug tasse",250],
+            ["bidon-450ml.jpg","Bidon 450 ml",400],
+            ["bidon-650ml2.jpg","Bidon 650 ml",450],
+            ["maillot.jpg","Impression sur maillot",200],
+            ["maillot1.jpg","Transfert opaque + impression sur maillot",250],
+            ["pvc.jpg","PVC","variable selon dimensions"],
+            ["pvc1.jpg","PVC","variable selon dimensions"],
+            ["tumbler.jpg","Tumbler",500],
+            ["tumbler1.jpg","Tumbler",500]
+        ];
+        foreach ($produits as $p) {
+            echo '<div class="produit">';
+            echo '<img src="'.$p[0].'" alt="'.$p[1].'">';
+            echo '<div class="produit-name">'.$p[1].'</div>';
+            echo '<div class="produit-price">Prix HT : '.(is_numeric($p[2]) ? "$".$p[2] : $p[2]).'</div>';
+            echo '<a href="tel:46494699" class="moncash-btn">Acheter via MonCash</a> ';
+            echo '<a href="https://wa.me/50946494699" class="whatsapp-btn">WhatsApp</a>';
+            echo '<div class="contact-after">Contactez-nous après paiement pour finaliser votre commande</div>';
+            echo '</div>';
+        }
+        ?>
+    </div>
+</section>
+
+<section id="apropos">
+    <h2>À propos</h2>
+    <p style="max-width:600px; margin:0 auto; text-align:center;">
+        Bienvenue sur notre catalogue en ligne ! Nous proposons une variété de produits personnalisés tels que bourses, cadres, tasses, mugs, bidons et maillots. Chaque produit peut être personnalisé selon vos besoins. Nous nous engageons à fournir un service rapide et fiable pour tous nos clients en Haïti.
+    </p>
+</section>
+
+<section id="contact">
+    <h2>Contact & Adresse</h2>
+    <p style="text-align:center; max-width:600px; margin:0 auto;">
+        📍 Adresse : Delmas, Haïti (W.I)<br>
+        📞 Téléphone : <a href="tel:46494699" style="color:#2b7a0b;">46494699</a><br>
+        📧 Email : <a href="mailto:sainvilusmichelet21@gmail.com" style="color:#2b7a0b;">sainvilusmichelet21@gmail.com</a><br>
+        💬 WhatsApp : <a href="https://wa.me/50946494699" style="color:#2b7a0b;">Envoyer un message</a>
+    </p>
+</section>
+
+<section id="paiement">
+    <h2>Instructions de Paiement MonCash</h2>
+    <div class="instructions">
+        <ol>
+            <li>Ouvrez l'application MonCash sur votre téléphone.</li>
+            <li>Choisissez <em>Payer un commerçant</em> ou <em>Envoyer de l'argent</em>.</li>
+            <li>Entrez le numéro MonCash : <strong>46494699</strong>.</li>
+            <li>Indiquez le montant correspondant au produit choisi.</li>
+            <li>Confirmez le paiement et conservez le reçu.</li>
+        </ol>
+        <p>Après le paiement, utilisez le formulaire ci-dessous pour confirmer votre commande.</p>
+    </div>
+
+    <div class="formulaire">
+        <h2>Confirmer votre paiement</h2>
+        <?php
+            if($success_msg) echo "<div class='success-msg'>$success_msg</div>";
+            if($error_msg) echo "<div class='error-msg'>$error_msg</div>";
+        ?>
+        <form method="post" action="" onsubmit="return validateForm();">
+            <label for="nom">Nom complet</label>
+            <input type="text" id="nom" name="Nom" required>
+
+            <label for="produit">Produit acheté</label>
+            <select id="produit" name="Produit" required>
+                <option value="">--Choisir un produit--</option>
+                <?php foreach ($produits as $p) { echo '<option value="'.$p[1].'">'.$p[1].'</option>'; } ?>
+            </select>
+
+            <label for="montant">Montant payé (HT)</label>
+            <input type="text" id="montant" name="Montant" required>
+
+            <label for="message">Message / Référence paiement (facultatif)</label>
+            <textarea id="message" name="Message" rows="3"></textarea>
+
+            <label for="captcha">Captcha : combien font 2 + 3 ?</label>
+            <input type="text" id="captcha" name="captcha" required>
+
+            <button type="submit">Envoyer la confirmation</button>
+        </form>
+    </div>
+</section>
+
+<footer>
+    &copy; <?php echo date("Y"); ?> Tous droits réservés. Mon Catalogue, Delmas, Haïti
+</footer>
+
+</body>
+</html>
